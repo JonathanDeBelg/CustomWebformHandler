@@ -80,8 +80,6 @@ class MyWebformHandler extends WebformHandlerBase
       'subject' => "U bent klant!",
     ];
 
-    //dd($params);
-
     $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, TRUE);
     $this->set_drupal_notification($result);
   }
@@ -113,8 +111,9 @@ class MyWebformHandler extends WebformHandlerBase
     if ($result['result'] !== true) {
       \Drupal::messenger()->addMessage(t('There was a problem sending your registration and it was not sent. Call me! See the contact page for my number.'), 'error');
     } else {
-      dd($result);
-//      \Drupal::messenger()->addError(var_dump($result));
+      //dd($result);
+      //\Drupal::messenger()->addError(var_dump($result));
+      \Drupal::logger('mail-log')->notice($result);
       \Drupal::messenger()->addMessage(t('Your registrations has been sent.'));
     }
   }

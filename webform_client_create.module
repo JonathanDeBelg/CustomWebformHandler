@@ -5,7 +5,7 @@ function webform_client_creator_mail($key, &$message, $params) {
     case 'general_mail':
       $message['from'] = \Drupal::config('system.site')->get('mail');
       $message['subject'] = $params['subject'];
-      $message['body'][] = $params['body'];
+      $message['body'][] = Html::escape($params['body']);
       break;
   }
 }

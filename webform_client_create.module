@@ -11,8 +11,9 @@ function webform_client_creator_mail($key, &$message, $params) {
   }
 }
 
-function webform_client_creator_user_insert(Drupal\Core\Entity\EntityInterface $entity)
+function webform_client_creator_node_insert(Drupal\Core\Entity\EntityInterface $entity)
 {
+  drupal_set_message($entity->getEntityType());
   if($entity->getEntityType() == 'client') {
     $mailManager = \Drupal::service('plugin.manager.mail');
     $module = 'webform_client_creator';
@@ -20,6 +21,7 @@ function webform_client_creator_user_insert(Drupal\Core\Entity\EntityInterface $
     $to = $entity->getEmail();
     $params['message'] = "Welcome to our site! \r\nYour username is " . $entity->getUsername() . " " . "\r\nIf you would like to reset your password, you can at the following link: \r\n" . user_pass_reset_url($entity);
     $langcode = $entity->getPreferredLangcode();
+
 
     $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, TRUE);
     if ($result['result'] !== true) {

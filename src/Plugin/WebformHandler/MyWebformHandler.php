@@ -2,10 +2,14 @@
 
 namespace Drupal\webform_client_creator\Plugin\WebformHandler;
 
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\node\Entity\Node;
 use Drupal\media\Entity\Media;
 use Drupal\file\Entity\File;
+use Drupal\user\Entity\Role;
+use Drupal\user\Entity\User;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
 
@@ -31,41 +35,17 @@ class MyWebformHandler extends WebformHandlerBase
 
   public function postSave(WebformSubmissionInterface $webform_submission, $update = TRUE)
   {
-
-    // Get an array of form field values.
     $submission_array = $webform_submission->getData();
-    // Dump the $submission_array to acquire the fields if you don't know what fields you're working with.
+    $createdUser = $this->handleUser($submission_array);
 
-    // Prepare variables for use in the node.
-    $title = $submission_array['e_mailadres'];
-
-    // Create the node.
-    $node = Node::create([
-      'type' => 'klant',
-      'status' => FALSE,
-      'title' => $title,
-      'field_voornaam' => $submission_array['voornaam'],
-      'field_achternaam' => $submission_array['achternaam'],
-      'field_telefoonnum' => $submission_array['mobiele_telefoonnummer'],
-      'field_adres' => $submission_array['adres'],
-      'field_postcode' => $submission_array['postcode'],
-      'field_woonplaats' => $submission_array['woonplaats'],
-      'field_betaal' => $submission_array['betaalopties'],
-      'field_hoevaak_wilt_u_bloemen' => $submission_array['hoevaak_wilt_u_bloemen_ontvangen_per_maand_'],
-      'field_welk_pakket' => $submission_array['welk_pakket_wilt_u_ontvangen_'],
-      'field_actief' => TRUE,
-//      $submission_array['ik_wil_dit_abonnement_cadeau_geven']
-    ]);
-
-    // Save the node.
-    $node->save();
-
-    $this->send_mail($submission_array, $node->id());
+    $result = $this->send_mail($submission_array, $createdUser->id());
+    $this->set_drupal_notification($result);
   }
 
   /**
    * @param array $submission_array
    * @param $node_id
+   * @return
    */
   private function send_mail(array $submission_array, $node_id)
   {
@@ -76,12 +56,13 @@ class MyWebformHandler extends WebformHandlerBase
     $to = $submission_array['e_mailadres'];
 
     $params = [
-      'body' => render($this->generate_mail_message($node_id, $submission_array)),
+      'mail_title' => 'Test',
+      'body' => $this->generate_mail_message($node_id, $submission_array),
       'subject' => "U bent klant!",
     ];
 
     $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, TRUE);
-    $this->set_drupal_notification($result);
+    return $result;
   }
 
   /**
@@ -111,10 +92,33 @@ class MyWebformHandler extends WebformHandlerBase
     if ($result['result'] !== true) {
       \Drupal::messenger()->addMessage(t('There was a problem sending your registration and it was not sent. Call me! See the contact page for my number.'), 'error');
     } else {
-      //dd($result);
-      //\Drupal::messenger()->addError(var_dump($result));
-      \Drupal::logger('mail-log')->notice($result);
       \Drupal::messenger()->addMessage(t('Your registrations has been sent.'));
     }
+  }
+
+  /**
+   * @param array $submission_array
+   * @return EntityInterface
+   * @throws EntityStorageException
+   */
+  private function handleUser(array $submission_array): EntityInterface
+  {
+    $user = User::create([
+      'name' => $submission_array['voornaam'] . " " . $submission_array['achternaam'],
+      'field_telefoon' => $submission_array['mobiele_telefoonnummer'],
+      'field_adres' => $submission_array['adres'],
+      'field_postcode' => $submission_array['postcode'],
+      'field_woonplaats' => $submission_array['woonplaats'],
+      'field_betaalopties' => $submission_array['betaalopties'],
+      'field_hoevaak_bloemen' => $submission_array['hoevaak_wilt_u_bloemen_ontvangen_per_maand_'],
+      'field_pakketkeuze' => $submission_array['welk_pakket_wilt_u_ontvangen_'],
+      'field_abbo_actief' => TRUE,
+    ]);
+    $user->addRole('client');
+    $user->activate();
+    $user->setEmail($submission_array['e_mailadres']);
+    $user->save();
+
+    return $user;
   }
 }

@@ -38,8 +38,8 @@ class MyWebformHandler extends WebformHandlerBase
     $submission_array = $webform_submission->getData();
     $createdUser = $this->handleUser($submission_array);
 
-    $result = $this->send_mail($submission_array, $createdUser->id());
-    $this->set_drupal_notification($result);
+//    $result = $this->send_mail($submission_array, $createdUser->id());
+//    $this->set_drupal_notification($result);
   }
 
   /**

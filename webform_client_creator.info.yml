@@ -1,0 +1,6 @@
+name: Webform Client Creator
+description: Converts webform submission into client node
+package: Custom
+type: module
+version: 1.0
+core: 8.x

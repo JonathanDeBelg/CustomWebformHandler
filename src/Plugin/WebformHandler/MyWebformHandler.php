@@ -92,7 +92,7 @@ class MyWebformHandler extends WebformHandlerBase
     if ($result['result'] !== true) {
       \Drupal::messenger()->addMessage(t('There was a problem sending your registration and it was not sent. Call me! See the contact page for my number.'), 'error');
     } else {
-      \Drupal::messenger()->addMessage(t('Your registrations has been sent.'));
+      \Drupal::messenger()->addMessage(t('Uw inschrijving is verzonden! Controleer uw mailbox (vergeet niet de spam te controleren. Geen mail ontvangen? Bel ons even!'));
     }
   }
 

@@ -38,8 +38,8 @@ class MyWebformHandler extends WebformHandlerBase
     $submission_array = $webform_submission->getData();
     $createdUser = $this->handleUser($submission_array);
 
-//    $result = $this->send_mail($submission_array, $createdUser->id());
-//    $this->set_drupal_notification($result);
+    $result = $this->send_mail($submission_array, $createdUser->id());
+    $this->set_drupal_notification($result);
   }
 
   /**
@@ -50,7 +50,7 @@ class MyWebformHandler extends WebformHandlerBase
   private function send_mail(array $submission_array, $node_id)
   {
     $mailManager = \Drupal::service('plugin.manager.mail');
-    $langcode = \Drupal::currentUser()->getPreferredLangcode();
+    $langcode = 'nl';
     $module = 'webform_client_creator';
     $key = 'general_mail';
     $to = $submission_array['e_mailadres'];

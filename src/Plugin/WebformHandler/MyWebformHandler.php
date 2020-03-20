@@ -4,14 +4,10 @@ namespace Drupal\webform_client_creator\Plugin\WebformHandler;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageException;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\node\Entity\Node;
-use Drupal\media\Entity\Media;
-use Drupal\file\Entity\File;
-use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
+use Drupal\webform_client_creator\UserMailer;
 
 /**
  * Create a new Article node from a webform submission.
@@ -31,6 +27,7 @@ class MyWebformHandler extends WebformHandlerBase
 
   /**
    * {@inheritdoc}
+   * @throws EntityStorageException
    */
 
   public function postSave(WebformSubmissionInterface $webform_submission, $update = TRUE)
@@ -38,62 +35,7 @@ class MyWebformHandler extends WebformHandlerBase
     $submission_array = $webform_submission->getData();
     $createdUser = $this->handleUser($submission_array);
 
-    $result = $this->send_mail($submission_array, $createdUser->id());
-    $this->set_drupal_notification($result);
-  }
-
-  /**
-   * @param array $submission_array
-   * @param $node_id
-   * @return
-   */
-  private function send_mail(array $submission_array, $node_id)
-  {
-    $mailManager = \Drupal::service('plugin.manager.mail');
-    $langcode = 'nl';
-    $module = 'webform_client_creator';
-    $key = 'general_mail';
-    $to = $submission_array['e_mailadres'];
-
-    $params = [
-      'mail_title' => 'Test',
-      'body' => $this->generate_mail_message($node_id, $submission_array),
-      'subject' => "U bent klant!",
-    ];
-
-    $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, TRUE);
-    return $result;
-  }
-
-  /**
-   * @param $node_id
-   * @return string
-   */
-  private function generate_mail_message($node_id, array $submission_array): string
-  {
-    $message = "";
-    $message .= "<p>Beste " . $submission_array['voornaam'] . ",</p>";
-    $message .= '<p>Wij hebben uw mail in goede orde ontvagen! Om maar direct even met de deur in huis te vallen krijgt u ' .
-      'van ons een klantnummer. Met deze klantnummer kunt u korting krijgen en uw account ' .
-      'activeren/deactiveren. Gaat u op vakantie, dan is het natuurlijk zonde om de bloemen te ' .
-      'laten verwelken. Wilt u dan tijdelijk uw account deactiveren? Dan gaat u naar ' .
-      '<a href="bosjevandrosje.nl/klanten/' . $node_id . '">' . 'bosjevandrosje.nl/klant/</a>. ' .
-      'U ziet ons bloemetjes spoedig tegemoet!</p>';
-    $message .= "<p>Groetjes Beau Drost,</p>";
-    $message .= "<br><p>Bosje van Drosje</p>";
-    return $message;
-  }
-
-  /**
-   * @param $result
-   */
-  private function set_drupal_notification($result)
-  {
-    if ($result['result'] !== true) {
-      \Drupal::messenger()->addMessage(t('There was a problem sending your registration and it was not sent. Call me! See the contact page for my number.'), 'error');
-    } else {
-      \Drupal::messenger()->addMessage(t('Uw inschrijving is verzonden! Controleer uw mailbox (vergeet niet de spam te controleren. Geen mail ontvangen? Bel ons even!'));
-    }
+    UserMailer::send_mail($submission_array, $createdUser->name);
   }
 
   /**
@@ -104,7 +46,9 @@ class MyWebformHandler extends WebformHandlerBase
   private function handleUser(array $submission_array): EntityInterface
   {
     $user = User::create([
-      'name' => $submission_array['voornaam'] . " " . $submission_array['achternaam'],
+      'name' => $submission_array['e_mailadres'],
+      'field_voornaam' => $submission_array['voornaam'],
+      'field_achternaam' => $submission_array['achternaam'],
       'field_telefoon' => $submission_array['mobiele_telefoonnummer'],
       'field_adres' => $submission_array['adres'],
       'field_postcode' => $submission_array['postcode'],

@@ -13,8 +13,7 @@ function webform_client_creator_theme($existing, $type, $theme, $path) {
     'confirmation_mail' => array(
       'variables' => array(
         'loginlink' => null,
-        'newUserName' => null,
-        'name' => null
+        'newUserName' => null
       )
     )
   );

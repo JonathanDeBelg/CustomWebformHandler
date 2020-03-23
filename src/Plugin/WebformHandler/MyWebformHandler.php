@@ -34,8 +34,7 @@ class MyWebformHandler extends WebformHandlerBase
   {
     $submission_array = $webform_submission->getData();
     $createdUser = $this->handleUser($submission_array);
-
-    UserMailer::send_mail($submission_array, $createdUser->name);
+    (new UserMailer)->send_mail($submission_array, $createdUser->name);
   }
 
   /**

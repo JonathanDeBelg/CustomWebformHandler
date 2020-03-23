@@ -23,7 +23,6 @@ abstract class UserMailer {
       '#theme' => 'confirmationemail',
       '#loginlink' => $loginLink,
       '#newUserName' => $userName,
-      '#editmode' => false,
       '#cache' => array('max-age' => 0)
     );
 

@@ -25,7 +25,7 @@ class UserMailer {
     ];
 
     $params['message'] = render($html);;
-    $params['subject'] = 'U bent klant!';
+    $params['subject'] = 'We hebben uw verzoek ontvangen!';
 
     $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, TRUE);
     $this->set_drupal_notification($result);

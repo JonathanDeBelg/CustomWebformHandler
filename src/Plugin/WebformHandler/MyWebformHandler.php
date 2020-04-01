@@ -1,5 +1,4 @@
 <?php
-
 namespace Drupal\webform_client_creator\Plugin\WebformHandler;
 
 use Drupal\Core\Entity\EntityInterface;
@@ -8,6 +7,7 @@ use Drupal\user\Entity\User;
 use Drupal\webform\Plugin\WebformHandlerBase;
 use Drupal\webform\WebformSubmissionInterface;
 use Drupal\webform_client_creator\UserMailer;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * Create a new Article node from a webform submission.
@@ -33,20 +33,32 @@ class MyWebformHandler extends WebformHandlerBase
   public function postSave(WebformSubmissionInterface $webform_submission, $update = TRUE)
   {
     $submission_array = $webform_submission->getData();
-    $createdUser = $this->handleUser($submission_array);
-    (new UserMailer)->send_mail($submission_array, $createdUser->name);
+    $ids = \Drupal::entityQuery('user')
+      ->condition('name', $submission_array['e_mailadres'])
+      ->range(0, 1)
+      ->execute();
+
+    if(!empty($ids)){
+      $redirect = new RedirectResponse("https://bosjevandrosje.nl/contact");
+      $redirect->send();
+      \Drupal::messenger()->addMessage(t('Dit e-mailadres staat al geregistreerd. We zoeken het samen uit! Bel ons op 06-42381468, of mail ons naar info@bosjevandrosje.nl'), 'error', TRUE);
+      exit;
+    } else {
+      $tijdelijkwachtwoord = $submission_array['e_mailadres'] . "-tijdelijkWachtwoord123";
+      $this->handleUser($submission_array);
+      (new UserMailer)->send_mail($tijdelijkwachtwoord, $submission_array);
+    }
   }
 
   /**
    * @param array $submission_array
-   * @return EntityInterface
    * @throws EntityStorageException
    */
-  private function handleUser(array $submission_array): EntityInterface
+  private function handleUser(array $submission_array)
   {
     $user = User::create([
       'name' => $submission_array['e_mailadres'],
-      'field_voornaam' => $submission_array['voornaam'],
+      'field_voornaam_' => $submission_array['voornaam'],
       'field_achternaam' => $submission_array['achternaam'],
       'field_telefoon' => $submission_array['mobiele_telefoonnummer'],
       'field_adres' => $submission_array['adres'],
@@ -60,8 +72,7 @@ class MyWebformHandler extends WebformHandlerBase
     $user->addRole('client');
     $user->activate();
     $user->setEmail($submission_array['e_mailadres']);
+    $user->setPassword($submission_array['e_mailadres'] . "-tijdelijkWachtwoord123?]");
     $user->save();
-
-    return $user;
   }
 }
